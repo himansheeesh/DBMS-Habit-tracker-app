@@ -1,12 +1,12 @@
 import streamlit as st
 import mysql.connector
 from datetime import *
-from habits import *
-from goals import *
-from rooms import *
-from userrrooms import *
-from reminders import *
-from leaderboards import *
+from Entities.habits import *
+from Entities.goals import *
+from Entities.leaderboards import *
+from Entities.reminders import *
+from Entities.rooms import *
+from Entities.userrrooms import *
 
 # Database connection configuration
 db_config = {
