@@ -7,13 +7,16 @@ from Entities.leaderboards import *
 from Entities.reminders import *
 from Entities.rooms import *
 from Entities.userrrooms import *
+from dotenv import load_dotenv
+import os
 
-# Database connection configuration
+load_dotenv()
+
 db_config = {
-    'host': 'localhost',
-    'user': 'root',
-    'password': 'your_password',
-    'database': 'habit_tracker_app'
+    "host": os.getenv("host"),
+    "user": os.getenv("user"),
+    "password": os.getenv("password"),
+    "database": os.getenv("database"),
 }
 
 # Function to establish a database connection
@@ -58,7 +61,6 @@ def get_user_id(email):
     else:
         return None
 
-
 def get_user_ids():
     connection = connect_to_database()
     cursor = connection.cursor()
@@ -96,6 +98,38 @@ def create_user(name, email, password):
     cursor.close()
     connection.close()
 
+def get_user_name(userid):
+    connection = connect_to_database()
+    cursor = connection.cursor()
+
+    query = "SELECT Name FROM users WHERE UserID = %s"
+    cursor.execute(query, (userid,))
+    result = cursor.fetchone()
+
+    cursor.close()
+    connection.close()
+
+    if result:
+        return result[0]
+    else:
+        return None
+
+def get_user_info():
+    connection = connect_to_database()
+    cursor = connection.cursor(dictionary=True)
+
+    query = "SELECT * FROM users"
+    cursor.execute(query)
+    result = cursor.fetchall()
+
+    cursor.close()
+    connection.close()
+
+
+    if result:
+        return result
+    else:
+        return None
 
 st.title("Habit Tracker App")
 logged_in = False
@@ -155,7 +189,8 @@ if selected_user_id is None:
             st.error("User already exists. Please log in.")
 
 else:
-    st.write(f"Welcome, User {st.session_state.user_id}")
+    # st.write(f"Welcome, User {st.session_state.user_id}")
+    st.write(f"Welcome, {get_user_name(selected_user_id)}")
     logout_button = st.sidebar.button("Logout")
     if logout_button:
         st.session_state.user_id = None
@@ -168,11 +203,9 @@ if selected_user_id:
     logged_in = True
 
 
-
 if logged_in:
     selected_option = st.sidebar.radio("Select Option", ["Habits","Goals","Rooms","Reminders","Leaderboards"])  
 
-    
     if selected_option == "Habits":
         st.header("Create, Read, Update, or Delete Habit")
         selected_operation = st.radio("Choose Operation", ["Create", "Read", "Update", "Delete", "Calculate Percentage"])
@@ -197,23 +230,35 @@ if logged_in:
                 update_habit(selected_habit_id, habit_title, habit_description)
 
         elif selected_operation == "Delete":
-            selected_habit_id = st.selectbox("Select Habit to Delete", [habit['HabitID'] for habit in get_user_habits(selected_user_id)])
+
+            selected_habit_name = st.selectbox("Select Habit to Delete", [habit['Title'] for habit in user_habits])
+            for _ in user_habits:
+                if _['Title'] == selected_habit_name:
+                    selected_habit_id = _['HabitID']
+            
             if st.button("Delete Habit"):
                 delete_habit(selected_habit_id)
         
         elif selected_operation == "Calculate Percentage":
-            selected_habit_id = st.selectbox("Select Habit to Calculate Completion Percentage", [habit['HabitID'] for habit in get_user_habits(selected_user_id)])
+            selected_habit_name = st.selectbox("Select Habit to Calculate Completion Percentage", [habit['Title'] for habit in user_habits])
+            for _ in user_habits:
+                if _['Title'] == selected_habit_name:
+                    selected_habit_id = _['HabitID']
             if st.button("Calculate Percentage"):
                 result = calculate_completion_percentage(selected_habit_id)
                 st.write(result)
-
 
     if selected_option == 'Goals':
         st.header("Create, Read, Update, or Delete Goals")
 
         selected_operation = st.radio("Choose Operation", ["Create", "Read", "Update", "Delete"])
-        habit_id = st.selectbox("Select Habit", [habit['HabitID'] for habit in get_user_habits(selected_user_id)])
+        user_habits = get_user_habits(selected_user_id)
+        habit_name = st.selectbox("Select Habit", [habit['Title'] for habit in user_habits])
+        for _ in user_habits:
+            if _['Title'] == habit_name:
+                habit_id = _['HabitID']
         user_goals = get_user_goals(habit_id)
+        
 
         # Create Goal Section
         if selected_operation == 'Create':
@@ -233,7 +278,10 @@ if logged_in:
 
         if selected_operation == "Update":
             st.subheader("Update Goal")
-            selected_goal_id = st.selectbox("Select Goal to Update", [goal['GoalID'] for goal in user_goals])
+            selected_goal_name = st.selectbox("Select Goal to Update", [goal['Title'] for goal in user_goals])
+            for _ in user_goals:
+                if _['Title'] == selected_goal_name:
+                    selected_goal_id = _['GoalID']
             if selected_goal_id:
                 updated_goal_title = st.text_input("Updated Title")
                 updated_goal_description = st.text_area("Updated Description")
@@ -245,7 +293,10 @@ if logged_in:
 
         if selected_operation == "Delete":
             st.subheader("Delete Goal")
-            selected_goal_id_delete = st.selectbox("Select Goal to Delete", [goal['GoalID'] for goal in user_goals])
+            selected_goal_name_delete = st.selectbox("Select Goal to Delete", [goal['Title'] for goal in user_goals])
+            for _ in user_goals:
+                if _['Title'] == selected_goal_name_delete:
+                    selected_goal_id_delete = _['GoalID']
             if selected_goal_id_delete:
                 if st.button("Delete Goal"):
                     delete_goal(selected_goal_id_delete)
@@ -270,7 +321,10 @@ if logged_in:
 
         elif selected_option == "Update":
             st.header("Update Room")
-            selected_room_id = st.selectbox("Select Room to Update", [room['RoomID'] for room in user_rooms])
+            selected_room_name = st.selectbox("Select Room to Update", [room['Name'] for room in user_rooms])
+            for _ in user_rooms:
+                if _['Name'] == selected_room_name:
+                    selected_room_id = _['RoomID']
             if selected_room_id:
                 updated_room_name = st.text_input("Updated Room Name")
                 if st.button("Update Room"):
@@ -279,7 +333,11 @@ if logged_in:
 
         elif selected_option == "Delete":
             st.header("Delete Room")
-            selected_room_id_delete = st.selectbox("Select Room to Delete", [room['RoomID'] for room in user_rooms])
+            selected_room_name_delete = st.selectbox("Select Room to Delete", [room['Name'] for room in user_rooms])
+            for _ in user_rooms:
+                if _['Name'] == selected_room_name_delete:
+                    selected_room_id_delete = _['RoomID']
+
             if selected_room_id_delete:
                 if st.button("Delete Room"):
                     delete_room(selected_room_id_delete)
@@ -287,17 +345,27 @@ if logged_in:
         
         elif selected_option == "Add User":
             st.header("Add User to Room")
-            selected_room_id_add_user = st.selectbox("Select Room to Add User", [room['RoomID'] for room in user_rooms])
-            user_ids = get_user_ids()
+            selected_room_name_add_user = st.selectbox("Select Room to Add User", [room['Name'] for room in user_rooms])
+            for _ in user_rooms:
+                if _['Name'] == selected_room_name_add_user:
+                    selected_room_id_add_user = _['RoomID']
+            user_ids = get_user_info()
             if selected_room_id_add_user:
-                user_to_add = st.selectbox("Select User to Add", user_ids)  
+                user_to_add = st.selectbox("Select User to Add", [user['Name'] for user in user_ids])
+                for _ in user_ids:
+                    if _['Name'] == user_to_add:
+                        user_to_add = _['UserID'] 
                 if st.button("Add User to Room"):
                     add_user_to_room(user_to_add, selected_room_id_add_user)
                     st.success(f"User {user_to_add} added to Room {selected_room_id_add_user}")
 
         elif selected_option == "Remove User":
             st.header("Remove User from Room")
-            selected_room_id_remove_user = st.selectbox("Select Room to Remove User", [room['RoomID'] for room in user_rooms])
+            selected_room_id_remove_user = st.selectbox("Select Room to Remove User", [room['Name'] for room in user_rooms])
+            for _ in user_rooms:
+                if _['Name'] == selected_room_id_remove_user:
+                    selected_room_id_remove_user = _['RoomID']
+
             if selected_room_id_remove_user:
                 users_in_room = get_users_in_room(selected_room_id_remove_user)
                 users_in_room = [user['Name'] for user in users_in_room]
@@ -312,7 +380,7 @@ if logged_in:
             if selected_room_id_view_users:
                 users_in_room = get_users_in_room(selected_room_id_view_users)
                 for user in users_in_room:
-                    st.write(f"User {user['UserID']} in Room {selected_room_id_view_users}")
+                    st.write(f"{user['Name']} in Room {selected_room_id_view_users}")
 
 
     if selected_option == 'Reminders':
@@ -320,12 +388,14 @@ if logged_in:
         selected_option = st.radio("Select Reminder Function", ["Create", "Read", "Update", "Delete"])
         user_reminders = get_user_reminders(selected_user_id)
         user_habits = get_user_habits(selected_user_id)
-        user_habits = [habit['HabitID'] for habit in user_habits]
 
 
         if selected_option == "Create":
             st.header("Create Reminder")
-            habit_id = st.selectbox("Select Habit",user_habits) 
+            habit_id = st.selectbox("Select Habit",[habit['Title'] for habit in user_habits])
+            for _ in user_habits:
+                if _['Title'] == habit_id:
+                    habit_id = _['HabitID'] 
             time_period = st.date_input("Reminder Date")
             time_length = st.number_input("Time Length", min_value=1)
             time_unit = st.selectbox("Time Unit", ["minutes", "hours", "days"])
@@ -350,7 +420,7 @@ if logged_in:
 
         elif selected_option == "Delete":
             st.header("Delete Reminder")
-            selected_reminder_id_delete = st.selectbox("Select Habit Reminder to Delete", [reminder['HabitID'] for reminder in user_reminders])
+            selected_reminder_id_delete = st.selectbox("Select Habit Reminder to Delete", [ reminder['HabitID'] for reminder in user_reminders])
             if selected_reminder_id_delete:
                 if st.button("Delete Reminder"):
                     delete_reminder(selected_reminder_id_delete)
@@ -360,29 +430,32 @@ if logged_in:
     if selected_option == 'Leaderboards':
         selected_option = st.radio("Select Leaderboard Function", ["Room Leaderboard", "Overall Leaderboard", "Top Achiever in Each Room"])
         user_rooms = get_user_rooms(selected_user_id)
-        user_rooms = [room['RoomID'] for room in user_rooms]
+
 
         if selected_option == "Room Leaderboard":
             st.header("Room Leaderboard")
-            selected_room_id = st.selectbox("Select Room", user_rooms)  # Replace with your actual room IDs
+            selected_room_name = st.selectbox("Select Room", [room['Name'] for room in user_rooms])
+            for _ in user_rooms:
+                if _['Name'] == selected_room_name:
+                    selected_room_id = _['RoomID']
             room_leaderboard = get_room_leaderboard(selected_room_id)
 
             for i, user in enumerate(room_leaderboard, start=1):
-                st.write(f"{i}. User {user['UserID']} - Achievements: {user['Achievements']}")
+                st.write(f"{i}. {user['Name']} - Achievements: {user['Achievements']}")
 
         elif selected_option == "Overall Leaderboard":
             st.header("Overall Leaderboard")
             overall_leaderboard = get_overall_leaderboard()
 
             for i, user in enumerate(overall_leaderboard, start=1):
-                st.write(f"{i}. User {user['UserID']} - Total Achievements: {user['TotalAchievements']}")
+                st.write(f"{i}. {user['Name']} - Total Achievements: {user['TotalAchievements']}")
 
         elif selected_option == "Top Achiever in Each Room":
             st.header("Top Achiever in Each Room")
             top_achievers = get_top_achiever_in_each_room()
 
             for i, user in enumerate(top_achievers, start=1):
-                st.write(f"{i}. User {user['UserID']} - Achievements: {user['Achievements']}")
+                st.write(f"{i}. {user['Name']} - Achievements: {user['Achievements']}")
 
 
             

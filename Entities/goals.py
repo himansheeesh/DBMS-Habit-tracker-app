@@ -1,12 +1,15 @@
 import mysql.connector
 from datetime import date
+from dotenv import load_dotenv
+import os
 
-# Database connection configuration
+load_dotenv()
+
 db_config = {
-    'host': 'localhost',
-    'user': 'root',
-    'password': 'jebasither',
-    'database': 'habit_tracker_app'
+    "host": os.getenv("host"),
+    "user": os.getenv("user"),
+    "password": os.getenv("password"),
+    "database": os.getenv("database"),
 }
 
 # Function to establish a database connection

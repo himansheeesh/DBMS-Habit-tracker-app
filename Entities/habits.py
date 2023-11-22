@@ -1,12 +1,15 @@
 import mysql.connector
 from datetime import date
+from dotenv import load_dotenv
+import os
 
-# Database connection configuration
+load_dotenv()
+
 db_config = {
-    'host': 'localhost',
-    'user': 'root',
-    'password': 'jebasither',
-    'database': 'habit_tracker_app'
+    "host": os.getenv("host"),
+    "user": os.getenv("user"),
+    "password": os.getenv("password"),
+    "database": os.getenv("database"),
 }
 
 # Function to establish a database connection
@@ -93,6 +96,26 @@ def calculate_completion_percentage(habit_id):
     try:
         # Execute the function using a SELECT statement
         cursor.execute("SELECT CalculateCompletionPercentage(%s);", (habit_id,))
+
+        # Fetch the result
+        result = cursor.fetchone()[0]
+
+
+    except Exception as e:
+        print(f"Error: {e}")
+
+    finally:
+        cursor.close()
+        connection.close()
+        return result
+    
+def get_habit_name(habit_id):
+    connection = connect_to_database()
+    cursor = connection.cursor()
+
+    try:
+        # Execute the function using a SELECT statement
+        cursor.execute("SELECT Name from habit where habitID = %s;", (habit_id,))
 
         # Fetch the result
         result = cursor.fetchone()[0]
