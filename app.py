@@ -12,7 +12,7 @@ from Entities.userrrooms import *
 db_config = {
     'host': 'localhost',
     'user': 'root',
-    'password': '#your-password',
+    'password': 'your_password',
     'database': 'habit_tracker_app'
 }
 
