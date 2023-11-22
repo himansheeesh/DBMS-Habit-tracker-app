@@ -221,13 +221,18 @@ if logged_in:
             habit_description = st.text_area("Description") 
             if st.button("Create Habit"):
                 create_habit(habit_title, habit_description, selected_user_id)
+                st.success("Habit Created Successfully!")
                 
         elif selected_operation == "Update":
             habit_title = st.text_input("Title")
             habit_description = st.text_area("Description")
-            selected_habit_id = st.selectbox("Select Habit to Update", [habit['HabitID'] for habit in get_user_habits(selected_user_id)])
+            selected_habit_name = st.selectbox("Select Habit to Update", [habit['Title'] for habit in user_habits])
+            for _ in user_habits:
+                if _['Title'] == selected_habit_name:
+                    selected_habit_id = _['HabitID']
             if st.button("Update Habit"):
                 update_habit(selected_habit_id, habit_title, habit_description)
+                st.success("Habit Updated Successfully!")
 
         elif selected_operation == "Delete":
 
@@ -238,6 +243,7 @@ if logged_in:
             
             if st.button("Delete Habit"):
                 delete_habit(selected_habit_id)
+                st.success("Habit Deleted Successfully!")
         
         elif selected_operation == "Calculate Percentage":
             selected_habit_name = st.selectbox("Select Habit to Calculate Completion Percentage", [habit['Title'] for habit in user_habits])
@@ -270,6 +276,7 @@ if logged_in:
             
             if st.button("Create Goal"):
                 create_goal(goal_title, goal_description, goal_counter, goal_target, habit_id)
+                st.success("Goal Created Successfully!")
 
         if selected_operation == "Read":
             st.subheader("Your Goals")
@@ -290,6 +297,7 @@ if logged_in:
 
                 if st.button("Update Goal"):
                     update_goal(selected_goal_id, updated_goal_title, updated_goal_description, updated_goal_counter, updated_goal_target)
+                    st.success("Goal Created Successfully!")
 
         if selected_operation == "Delete":
             st.subheader("Delete Goal")
@@ -300,6 +308,7 @@ if logged_in:
             if selected_goal_id_delete:
                 if st.button("Delete Goal"):
                     delete_goal(selected_goal_id_delete)
+                    st.success("Goal Deleted Successfully!")
 
 
     if selected_option == 'Rooms':
