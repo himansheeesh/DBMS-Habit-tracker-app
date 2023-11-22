@@ -3,7 +3,13 @@
 
 ### Instructions to Start:  
 
-- Change mySQL password (#your_password) to your local mySQL password in **app.py** and  anywhere else required within the all the files within Entities folder.
+- Create a file called **.env** that contains the following details:
+``` 
+host = 'localhost'  
+user = 'root'  
+password = 'your_mysql_password'  
+database = 'habit_tracker_app'  
+``` 
 - Put the config file in .streamlit file on your laptop.
 
 
